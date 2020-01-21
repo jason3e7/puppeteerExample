@@ -20,10 +20,10 @@ const chromeArgs = [
   // chromeArgs.push("--proxy-server=127.0.0.1:8080");
   const browser = await puppeteer.launch({
     // slowMo: 100,
-    headless: false, 
+    // headless: false, 
     // devtools: true, 
-    // args: chromeArgs, 
-    // ignoreHTTPSErrors:true,
+    args: chromeArgs, 
+    ignoreHTTPSErrors:true,
   });
 
   const page = await browser.newPage();
@@ -59,7 +59,7 @@ const chromeArgs = [
   
   const text = await page.$eval('.text-gray-dark.mr-2', e => e.innerText);
   console.log("Hello " + text);
-  
+
   await page.waitFor(3500);
   await browser.close();
 })();
