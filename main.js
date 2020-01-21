@@ -1,5 +1,6 @@
-const puppeteer = require('puppeteer');
+'use strict';
 
+const puppeteer = require('puppeteer');
 const chromeArgs = [
 	'--no-sandbox',
 	'--disable-setuid-sandbox',
@@ -22,8 +23,7 @@ const chromeArgs = [
     // slowMo: 100,
     // headless: false, 
     // devtools: true, 
-    args: chromeArgs, 
-    ignoreHTTPSErrors:true,
+    args: chromeArgs, ignoreHTTPSErrors:true,
   });
 
   const page = await browser.newPage();
