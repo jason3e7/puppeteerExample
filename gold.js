@@ -29,7 +29,7 @@ const chromeArgs = [
   const page = await browser.newPage();
   await page.setViewport({ width: 1024, height: 768 });
 
-  var cost = 1511;
+  var cost = 0;
   var change = 0;
   var diff = 0;
 
