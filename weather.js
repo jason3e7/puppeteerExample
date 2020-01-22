@@ -1,6 +1,7 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
+const request = require("request");
 const chromeArgs = [
 	'--no-sandbox',
 	'--disable-setuid-sandbox',
@@ -39,9 +40,9 @@ const chromeArgs = [
   var temC3 = await page.$eval('td[headers="d1t12 three_hr_atemp"] .tem-C', e => e.innerText);
   var temC4 = await page.$eval('td[headers="d1t18 three_hr_atemp"] .tem-C', e => e.innerText);
 
-  var rain1 = await page.$eval('td[headers="d1t06 d1t09 three_hr_rain"]', e => e.innerText);
-  var rain3 = await page.$eval('td[headers="d1t12 d1t15 three_hr_rain"]', e => e.innerText);
-  var rain4 = await page.$eval('td[headers="d1t18 d1t21 three_hr_rain"]', e => e.innerText);
+  var rain1 = await page.$eval('tr.rain_wrap td:nth-child(1)', e => e.innerText);
+  var rain3 = await page.$eval('tr.rain_wrap td:nth-child(2)', e => e.innerText);
+  var rain4 = await page.$eval('tr.rain_wrap td:nth-child(3)', e => e.innerText);
   
   var humidty1 = await page.$eval('td[headers="d1t09 three_hr_humidty"]', e => e.innerText);
   var humidty3 = await page.$eval('td[headers="d1t12 three_hr_humidty"]', e => e.innerText);
@@ -81,22 +82,36 @@ const chromeArgs = [
   message += "12: | " + temC3 + " | " + humidty3 + " | " + rain3 + "<br>"
   message += "18: | " + temC4 + " | " + humidty4 + " | " + rain4 + "<br>"
 
-  await page.setRequestInterception(true);
-  page.on('request', interceptedRequest => {
-    const headers = interceptedRequest.headers();
-    headers['Content-Type'] = 'application/json';
+  // await page.setRequestInterception(true);
+  // page.on('request', interceptedRequest => {
+  //   const headers = interceptedRequest.headers();
+  //   headers['Content-Type'] = 'application/json';
 
-    var data = {
-      'method': 'POST',
-      'postData': '{"value1":"' + message + '"}',
-      'headers': headers
-    };
-    interceptedRequest.continue(data);
-  });
+  //   var data = {
+  //     'method': 'POST',
+  //     'postData': '{"value1":"' + message + '"}',
+  //     'headers': headers
+  //   };
+  //   interceptedRequest.continue(data);
+  // });
 
-  await page.goto('https://maker.ifttt.com/trigger//with/key/');
+  // await page.goto('https://maker.ifttt.com/trigger//with/key/');
 
   await browser.close();
+
+  request({
+    method: 'POST',
+    uri: 'https://maker.ifttt.com/trigger//with/key/',
+    headers: {
+      "Content-Type" : "application/json",
+    },
+    json: {
+      value1: message
+    },
+  }, function(e,r,b) {
+    if(!e) console.log(b);
+  });
+  
 })();
 
 
