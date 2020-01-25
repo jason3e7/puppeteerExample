@@ -22,9 +22,10 @@ const chromeArgs = [
   // chromeArgs.push("--proxy-server=127.0.0.1:8080");
   const browser = await puppeteer.launch({
     // slowMo: 100,
-    // headless: false, 
+    headless: false, 
     // devtools: true, 
     args: chromeArgs, ignoreHTTPSErrors:true,
+    executablePath: 'chromium-browser'
   });
 
   const page = await browser.newPage();
@@ -36,9 +37,9 @@ const chromeArgs = [
   var GT_C_AT = await page.$eval('#GT_C_AT', e => e.innerText);
   var GT_RH = await page.$eval('#GT_RH', e => e.innerText);
 
-  var temC1 = await page.$eval('td[headers="d1t09 three_hr_atemp"] .tem-C', e => e.innerText);
-  var temC3 = await page.$eval('td[headers="d1t12 three_hr_atemp"] .tem-C', e => e.innerText);
-  var temC4 = await page.$eval('td[headers="d1t18 three_hr_atemp"] .tem-C', e => e.innerText);
+  var temC1 = await page.$eval('td[headers="d1t09 three_hr_temp"] .tem-C', e => e.innerText);
+  var temC3 = await page.$eval('td[headers="d1t12 three_hr_temp"] .tem-C', e => e.innerText);
+  var temC4 = await page.$eval('td[headers="d1t18 three_hr_temp"] .tem-C', e => e.innerText);
 
   var rain1 = await page.$eval('tr.rain_wrap td:nth-child(1)', e => e.innerText);
   var rain3 = await page.$eval('tr.rain_wrap td:nth-child(2)', e => e.innerText);
@@ -77,10 +78,10 @@ const chromeArgs = [
   message += "體感 : " + GT_C_AT + "℃<br>"
   message += "濕度 : " + GT_RH + "%<br>"
   message += "AQI : " + aqiJson['Data'][16]['AQI'] + "(" + aqiJson['Data'][16]['MonobjName'] + ")<br>"
-  message += "==| 溫度 | 濕度 | 降雨 |<br>"
-  message += "09: | " + temC1 + " | " + humidty1 + " | " + rain1 + "<br>"
-  message += "12: | " + temC3 + " | " + humidty3 + " | " + rain3 + "<br>"
-  message += "18: | " + temC4 + " | " + humidty4 + " | " + rain4 + "<br>"
+  message += "===|  溫度 | 濕度 | 降雨 |<br>"
+  message += "09: | " + temC1 + "℃ | " + humidty1 + " | " + rain1 + "<br>"
+  message += "12: | " + temC3 + "℃ | " + humidty3 + " | " + rain3 + "<br>"
+  message += "18: | " + temC4 + "℃ | " + humidty4 + " | " + rain4 + "<br>"
 
   // await page.setRequestInterception(true);
   // page.on('request', interceptedRequest => {
@@ -113,5 +114,3 @@ const chromeArgs = [
   });
   
 })();
-
-
