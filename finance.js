@@ -29,6 +29,7 @@ const chromeArgs = [
   const page = await browser.newPage();
   await page.setViewport({ width: 1024, height: 768 });
 
+  var NZDcost = 0;
   var cost = 0;
   var change = 0;
   var diff = 0;
@@ -50,15 +51,27 @@ const chromeArgs = [
   await page.goto('https://www.kitco.com/charts/livegold.html');
   var spBid = await page.$eval('#sp-bid', e => e.innerText);
   var spAsk = await page.$eval('#sp-ask', e => e.innerText);
+  var spBidNum = parseFloat(spBid.replace(/,/g, ""));
 
-  var message = "<br>"
-  message += "台銀賣出 : " + ask + "<br>"
-  message += "台銀買進 : " + bid + "<br>"
-  message += "價差 : " + (askNum - bidNum) + "<br>"
-  message += "報酬率 : " + ((bidNum - cost) * 100 / cost).toFixed(2) + "%<br>"
-  message += "=====<br>"
-  message += "國際賣出 : " + spAsk + "<br>"
-  message += "國際買進 : " + spBid + "<br>"
+  // exchange rate
+  await page.goto('https://rate.bot.com.tw/xrt');
+  var USD = await page.$eval('tr:nth-child(1) td:nth-child(2)', e => e.innerText);
+  var NZD = await page.$eval('tr:nth-child(11) td:nth-child(4)', e => e.innerText);
+
+  var USDozCost = (spBidNum * parseFloat(USD) / 28.35).toFixed(2);
+  
+  var message = "<br>";
+  message += "NZD : " + NZD + "<br>";
+  message += "報酬率 : " + ((NZD - NZDcost) * 100 / NZDcost).toFixed(2) + "%<br>";
+  message += "=====<br>";
+  message += "台銀賣出 : " + ask + "<br>";
+  message += "台銀買進 : " + bid + "<br>";
+  message += "價差 : " + (askNum - bidNum) + "<br>";
+  message += "報酬率 : " + ((bidNum - cost) * 100 / cost).toFixed(2) + "%<br>";
+  message += "=====<br>";
+  message += "國際賣出 : " + spAsk + "<br>";
+  message += "國際買進 : " + spBid + "<br>";
+  message += "報酬率 : " + ((USDozCost - cost) * 100 / cost).toFixed(2) + "%<br>";
 
   await page.setRequestInterception(true);
   page.on('request', interceptedRequest => {
