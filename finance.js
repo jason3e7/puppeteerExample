@@ -1,5 +1,7 @@
 'use strict';
 
+const config = require('./config.json');
+const fs = require('fs').promises;
 const puppeteer = require('puppeteer');
 const chromeArgs = [
 	'--no-sandbox',
@@ -18,6 +20,28 @@ const chromeArgs = [
 ];
 
 (async () => {
+
+  const dataFile = "./data.json";
+  var dataExist = true; 
+  await fs.access(dataFile, fs.F_OK, function (err) {
+    if (err) {
+      dataExist = false;
+    }
+  }).catch(error =>  dataExist=false);
+
+  var data = {
+    "ask" : 0,
+    "bid" : 0,
+    "spBid" : 0,
+    "spAsk" : 0,
+    "USD" : 0,
+    "NZD" : 0
+  };
+
+  if (dataExist === true) {
+    data = require(dataFile);
+  } 
+
   // chromeArgs.push("--proxy-server=127.0.0.1:8080");
   const browser = await puppeteer.launch({
     // slowMo: 100,
@@ -29,10 +53,10 @@ const chromeArgs = [
   const page = await browser.newPage();
   await page.setViewport({ width: 1024, height: 768 });
 
-  var NZDcost = 0;
-  var cost = 0;
-  var change = 0;
-  var diff = 0;
+  var NZDcost = config.NZDcost;
+  var cost = config.goldCost;
+  // var change = 0;
+  // var diff = 0;
 
   // gold
   await page.goto('https://rate.bot.com.tw/gold');
@@ -61,32 +85,50 @@ const chromeArgs = [
   var USDozCost = (spBidNum * parseFloat(USD) / 28.35).toFixed(2);
   
   var message = "<br>";
-  message += "NZD : " + NZD + "<br>";
-  message += "報酬率 : " + ((NZD - NZDcost) * 100 / NZDcost).toFixed(2) + "%<br>";
-  message += "=====<br>";
-  message += "台銀賣出 : " + ask + "<br>";
-  message += "台銀買進 : " + bid + "<br>";
-  message += "價差 : " + (askNum - bidNum) + "<br>";
-  message += "報酬率 : " + ((bidNum - cost) * 100 / cost).toFixed(2) + "%<br>";
-  message += "=====<br>";
-  message += "國際賣出 : " + spAsk + "<br>";
-  message += "國際買進 : " + spBid + "<br>";
-  message += "報酬率 : " + ((USDozCost - cost) * 100 / cost).toFixed(2) + "%<br>";
+  if(data.NZD !== NZD) {
+    message += "NZD : " + NZD + "<br>";
+    message += "報酬率 : " + ((NZD - NZDcost) * 100 / NZDcost).toFixed(2) + "%<br>";
+    message += "=====<br>";
+    data.NZD = NZD;
+  }
+  if(data.ask !== ask || data.bid !== bid ) {
+    message += "台銀賣出 : " + ask + "<br>";
+    message += "台銀買進 : " + bid + "<br>";
+    message += "價差 : " + (askNum - bidNum) + "<br>";
+    message += "報酬率 : " + ((bidNum - cost) * 100 / cost).toFixed(2) + "%<br>";
+    message += "=====<br>";
+    data.ask = ask;
+    data.bid = bid;
+  }
+  if(data.spAsk !== spAsk || data.spBid !== spBid || data.USD !== USD) {
+    message += "國際賣出 : " + spAsk + "<br>";
+    message += "國際買進 : " + spBid + "<br>";
+    message += "報酬率 : " + ((USDozCost - cost) * 100 / cost).toFixed(2) + "%<br>";
+    message += "=====<br>";
+    data.spAsk = spAsk;
+    data.spBid = spBid;
+    data.USD = USD;
+  }
 
-  await page.setRequestInterception(true);
-  page.on('request', interceptedRequest => {
-    const headers = interceptedRequest.headers();
-    headers['Content-Type'] = 'application/json';
+  if(message !== "<br>") {
+    await page.setRequestInterception(true);
+    page.on('request', interceptedRequest => {
+      const headers = interceptedRequest.headers();
+      headers['Content-Type'] = 'application/json';
 
-    var data = {
-      'method': 'POST',
-      'postData': '{"value1":"' + message + '"}',
-      'headers': headers
-    };
-    interceptedRequest.continue(data);
-  });
+      var postData = {
+        'method': 'POST',
+        'postData': '{"value1":"' + message + '"}',
+        'headers': headers
+      };
+      interceptedRequest.continue(postData);
+    });
 
-  await page.goto('https://maker.ifttt.com/trigger//with/key/');
+    await page.goto("https://maker.ifttt.com/trigger/" + config.ifttt.event + "/with/key/" + config.ifttt.key );
 
+  }
+  
   await browser.close();
+  await fs.writeFile(dataFile, JSON.stringify(data), 'utf8');
+
 })();
