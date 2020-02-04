@@ -1,6 +1,6 @@
 'use strict';
 
-const config = require('./config.json');
+const config = require(__dirname + '/config.json');
 const fs = require('fs').promises;
 const puppeteer = require('puppeteer');
 const chromeArgs = [
@@ -21,7 +21,7 @@ const chromeArgs = [
 
 (async () => {
 
-  const dataFile = "./data.json";
+  const dataFile = __dirname + "/data.json";
   var dataExist = true; 
   await fs.access(dataFile, fs.F_OK, function (err) {
     if (err) {
