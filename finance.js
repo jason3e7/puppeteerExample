@@ -4,20 +4,24 @@ const config = require(__dirname + '/config.json');
 const fs = require('fs').promises;
 const puppeteer = require('puppeteer');
 const chromeArgs = [
-	'--no-sandbox',
-	'--disable-setuid-sandbox',
-	'--disable-gpu',
-	'--hide-scrollbars',
-	'--mute-audio',
-	'--ignore-certificate-errors',
-	'--ignore-certificate-errors-spki-list',
-	'--ssl-version-max=tls1.3',
-	'--ssl-version-min=tls1',
-	'--disable-web-security',
-	'--allow-running-insecure-content',
-	'--proxy-bypass-list=<-loopback>',
-	'--window-size=1024,768'
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-gpu',
+  '--hide-scrollbars',
+  '--mute-audio',
+  '--ignore-certificate-errors',
+  '--ignore-certificate-errors-spki-list',
+  '--ssl-version-max=tls1.3',
+  '--ssl-version-min=tls1',
+  '--disable-web-security',
+  '--allow-running-insecure-content',
+  '--proxy-bypass-list=<-loopback>',
+  '--window-size=1024,768'
 ];
+
+function getRate(price, cost) {
+  return ((price - cost) * 100 / cost).toFixed(2);
+}
 
 (async () => {
 
@@ -30,12 +34,9 @@ const chromeArgs = [
   }).catch(error =>  dataExist=false);
 
   var data = {
-    "ask" : 0,
-    "bid" : 0,
-    "spBid" : 0,
-    "spAsk" : 0,
-    "USD" : 0,
-    "NZD" : 0
+    "NZDrate" : 0,
+    "goldRate" : 0,
+    "gGoldRate" : 0
   };
 
   if (dataExist === true) {
@@ -83,31 +84,33 @@ const chromeArgs = [
   var NZD = await page.$eval('tr:nth-child(11) td:nth-child(4)', e => e.innerText);
 
   var USDozCost = (spBidNum * parseFloat(USD) / 28.35).toFixed(2);
+
+  // calculation rate
+  var goldRate = getRate(bidNum, cost)
+  var gGoldRate = getRate(USDozCost, cost)
+  var NZDrate = getRate(NZD, NZDcost)
   
   var message = "<br>";
-  if(data.NZD !== NZD) {
+  if(data.NZDrate !== NZDrate) {
     message += "NZD : " + NZD + "<br>";
-    message += "報酬率 : " + ((NZD - NZDcost) * 100 / NZDcost).toFixed(2) + "%<br>";
+    message += "報酬率 : " + NZDrate + "%<br>";
     message += "=====<br>";
-    data.NZD = NZD;
+    data.NZDrate = NZDrate;
   }
-  if(data.ask !== ask || data.bid !== bid ) {
+  if(data.goldRate !== goldRate) {
     message += "台銀賣出 : " + ask + "<br>";
     message += "台銀買進 : " + bid + "<br>";
     message += "價差 : " + (askNum - bidNum) + "<br>";
-    message += "報酬率 : " + ((bidNum - cost) * 100 / cost).toFixed(2) + "%<br>";
+    message += "報酬率 : " + goldRate + "%<br>";
     message += "=====<br>";
-    data.ask = ask;
-    data.bid = bid;
+    data.goldRate = goldRate;
   }
-  if(data.spAsk !== spAsk || data.spBid !== spBid || data.USD !== USD) {
+  if(data.gGoldRate !== gGoldRate) {
     message += "國際賣出 : " + spAsk + "<br>";
     message += "國際買進 : " + spBid + "<br>";
-    message += "報酬率 : " + ((USDozCost - cost) * 100 / cost).toFixed(2) + "%<br>";
+    message += "報酬率 : " + gGoldRate + "%<br>";
     message += "=====<br>";
-    data.spAsk = spAsk;
-    data.spBid = spBid;
-    data.USD = USD;
+    data.gGoldRate = gGoldRate;
   }
 
   if(message !== "<br>") {
@@ -125,7 +128,6 @@ const chromeArgs = [
     });
 
     await page.goto("https://maker.ifttt.com/trigger/" + config.ifttt.event + "/with/key/" + config.ifttt.key );
-
   }
   
   await browser.close();
