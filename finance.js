@@ -91,13 +91,15 @@ function getRate(price, cost) {
   var NZDrate = getRate(NZD, NZDcost)
   
   var message = "<br>";
-  if(data.NZDrate !== NZDrate) {
+
+  if(data.NZDrate === 0 || (Math.abs(data.NZDrate - NZDrate) > 0.5)) {
     message += "NZD : " + NZD + "<br>";
     message += "報酬率 : " + NZDrate + "%<br>";
     message += "=====<br>";
     data.NZDrate = NZDrate;
   }
-  if(data.goldRate !== goldRate) {
+  if(data.goldRate === 0 || (Math.abs(data.goldRate - goldRate) > 0.5)) {
+    message += "gold<br>";
     message += "台銀賣出 : " + ask + "<br>";
     message += "台銀買進 : " + bid + "<br>";
     message += "價差 : " + (askNum - bidNum) + "<br>";
@@ -105,7 +107,8 @@ function getRate(price, cost) {
     message += "=====<br>";
     data.goldRate = goldRate;
   }
-  if(data.gGoldRate !== gGoldRate) {
+  if(data.gGoldRate === 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.5)) {
+    message += "gold<br>";
     message += "國際賣出 : " + spAsk + "<br>";
     message += "國際買進 : " + spBid + "<br>";
     message += "報酬率 : " + gGoldRate + "%<br>";
