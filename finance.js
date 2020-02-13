@@ -36,7 +36,9 @@ function getRate(price, cost) {
   var data = {
     "NZDrate" : 0,
     "goldRate" : 0,
-    "gGoldRate" : 0
+    "gGoldRate" : 0,
+    "TXprice" : 0,
+    "VIXprice" : 0,
   };
 
   if (dataExist === true) {
@@ -52,7 +54,19 @@ function getRate(price, cost) {
   });
 
   const page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36');
   await page.setViewport({ width: 1024, height: 768 });
+
+  var status = "day";
+  const now = new Date();
+  const hours = now.getUTCHours() + 8;
+  const mins = now.getUTCMinutes();
+  
+  if (((hours == 8 && mins >= 45) || (hours > 8)) && (hours < 13 || (hours == 13 && mins < 45))) {
+    status = "day";
+  } else {
+    status = "night";
+  }
 
   var NZDcost = config.NZDcost;
   var cost = config.goldCost;
@@ -85,6 +99,25 @@ function getRate(price, cost) {
 
   var USDozCost = (spBidNum * parseFloat(USD) / 28.35).toFixed(2);
 
+  // Stock
+  var TXprice = 0;
+  if (status == "day") {
+    await page.goto('https://info512.taifex.com.tw/Future/FusaQuote_Norl.aspx');
+    var dayPrice = await page.$eval('#ctl00_ContentPlaceHolder1_uc_DgFusaQuote1_UpdatePanel00 tr:nth-child(2) td:nth-child(7)', e => e.innerText);
+    var TXprice = parseInt(dayPrice.replace(/,/g, ""));
+  } else {
+    await page.goto('https://info512ah.taifex.com.tw/Future/FusaQuote_Norl.aspx');
+    var nightPrice = await page.$eval('#ctl00_ContentPlaceHolder1_uc_DgFusaQuote1_UpdatePanel00 tr:nth-child(3) td:nth-child(7)', e => e.innerText);
+    var TXprice = parseInt(nightPrice.replace(/,/g, ""));
+  }
+
+  var VIXprice = data.VIXprice;
+  if (status == "day" || data.VIXprice == 0) {
+    await page.goto('https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_00677U.tw');
+    const data = JSON.parse(await page.$eval('body', e => e.innerText));
+    VIXprice = parseFloat(data['msgArray'][0]['z']);
+  }
+
   // calculation rate
   var goldRate = getRate(bidNum, cost)
   var gGoldRate = getRate(USDozCost, cost)
@@ -92,13 +125,13 @@ function getRate(price, cost) {
   
   var message = "<br>";
 
-  if(data.NZDrate === 0 || (Math.abs(data.NZDrate - NZDrate) > 0.5)) {
+  if(data.NZDrate === 0 || (Math.abs(data.NZDrate - NZDrate) > 0.25)) {
     message += "NZD : " + NZD + "<br>";
     message += "報酬率 : " + NZDrate + "%<br>";
     message += "=====<br>";
     data.NZDrate = NZDrate;
   }
-  if(data.goldRate === 0 || (Math.abs(data.goldRate - goldRate) > 0.5)) {
+  if(data.goldRate === 0 || (Math.abs(data.goldRate - goldRate) > 0.25)) {
     message += "gold<br>";
     message += "台銀賣出 : " + ask + "<br>";
     message += "台銀買進 : " + bid + "<br>";
@@ -107,13 +140,25 @@ function getRate(price, cost) {
     message += "=====<br>";
     data.goldRate = goldRate;
   }
-  if(data.gGoldRate === 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.5)) {
+  if(data.gGoldRate === 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.25)) {
     message += "gold<br>";
     message += "國際賣出 : " + spAsk + "<br>";
     message += "國際買進 : " + spBid + "<br>";
     message += "報酬率 : " + gGoldRate + "%<br>";
     message += "=====<br>";
     data.gGoldRate = gGoldRate;
+  }
+  if(data.TXprice !== TXprice) {
+    message += "TXprice<br>";
+    message += "早臺指 & 晚臺指期 : " + TXprice + "<br>";
+    message += "=====<br>";
+    data.TXprice = TXprice;
+  }
+  if(data.VIXprice !== VIXprice) {
+    message += "VIXprice<br>";
+    message += "富邦VIX (00677U) : " + VIXprice + "<br>";
+    message += "=====<br>";
+    data.VIXprice = VIXprice;
   }
 
   if(message !== "<br>") {
