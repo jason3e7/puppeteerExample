@@ -23,6 +23,13 @@ function getRate(price, cost) {
   return ((price - cost) * 100 / cost).toFixed(2);
 }
 
+function getRateStatus(oldRate, newRate) {
+  if (parseFloat(newRate) >= parseFloat(oldRate)) {
+    return "📈";
+  }
+  return "📉";
+}
+
 (async () => {
 
   const dataFile = __dirname + "/data.json";
@@ -38,7 +45,7 @@ function getRate(price, cost) {
     "goldRate" : 0,
     "gGoldRate" : 0,
     "TXprice" : 0,
-    "VIXprice" : 0,
+    "VIXrate" : 0,
   };
 
   if (dataExist === true) {
@@ -70,6 +77,7 @@ function getRate(price, cost) {
 
   var NZDcost = config.NZDcost;
   var cost = config.goldCost;
+  var VIXcost = config.VIXcost;
   // var change = 0;
   // var diff = 0;
 
@@ -119,46 +127,48 @@ function getRate(price, cost) {
   }
 
   // calculation rate
-  var goldRate = getRate(bidNum, cost)
-  var gGoldRate = getRate(USDozCost, cost)
-  var NZDrate = getRate(NZD, NZDcost)
+  var goldRate = getRate(bidNum, cost);
+  var gGoldRate = getRate(USDozCost, cost);
+  var NZDrate = getRate(NZD, NZDcost);
+  var VIXrate = getRate(VIXprice, VIXcost);
   
   var message = "<br>";
 
-  if(data.NZDrate === 0 || (Math.abs(data.NZDrate - NZDrate) > 0.25)) {
+  if(data.NZDrate == 0 || (Math.abs(data.NZDrate - NZDrate) > 0.25)) {
     message += "NZD : " + NZD + "<br>";
-    message += "報酬率 : " + NZDrate + "%<br>";
+    message += "報酬率 : " + getRateStatus(data.NZDrate, NZDrate) + NZDrate + "%<br>";
     message += "=====<br>";
     data.NZDrate = NZDrate;
   }
-  if(data.goldRate === 0 || (Math.abs(data.goldRate - goldRate) > 0.25)) {
+  if(data.goldRate == 0 || (Math.abs(data.goldRate - goldRate) > 0.25)) {
     message += "gold<br>";
     message += "台銀賣出 : " + ask + "<br>";
     message += "台銀買進 : " + bid + "<br>";
     message += "價差 : " + (askNum - bidNum) + "<br>";
-    message += "報酬率 : " + goldRate + "%<br>";
+    message += "報酬率 : " + getRateStatus(data.goldRate, goldRate) + goldRate + "%<br>";
     message += "=====<br>";
     data.goldRate = goldRate;
   }
-  if(data.gGoldRate === 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.25)) {
+  if(data.gGoldRate == 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.25)) {
     message += "gold<br>";
     message += "國際賣出 : " + spAsk + "<br>";
     message += "國際買進 : " + spBid + "<br>";
-    message += "報酬率 : " + gGoldRate + "%<br>";
+    message += "報酬率 : " + getRateStatus(data.gGoldRate, gGoldRate) + gGoldRate + "%<br>";
     message += "=====<br>";
     data.gGoldRate = gGoldRate;
   }
-  if(data.TXprice !== TXprice) {
+  if(data.TXprice == 0 || (Math.abs(data.TXprice - TXprice) > 25)) {
     message += "TXprice<br>";
-    message += "早臺指 & 晚臺指期 : " + TXprice + "<br>";
+    message += "早臺指 & 晚臺指期 : " + getRateStatus(data.TXprice, TXprice) + TXprice + "<br>";
     message += "=====<br>";
     data.TXprice = TXprice;
   }
-  if(data.VIXprice !== VIXprice) {
-    message += "VIXprice<br>";
+  if(data.VIXrate == 0 || (Math.abs(data.VIXrate - VIXrate) > 0.2)) {
+    message += "VIX<br>";
     message += "富邦VIX (00677U) : " + VIXprice + "<br>";
+    message += "報酬率 : " + getRateStatus(data.VIXrate, VIXrate) + VIXrate + "%<br>";
     message += "=====<br>";
-    data.VIXprice = VIXprice;
+    data.VIXrate = VIXrate;
   }
 
   if(message !== "<br>") {

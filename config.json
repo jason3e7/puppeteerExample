@@ -4,5 +4,6 @@
     "key" : ""
   },
   "NZDcost" : 0,
-  "goldCost" : 0
+  "goldCost" : 0,
+  "VIXcost" : 0
 }
