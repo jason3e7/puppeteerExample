@@ -45,7 +45,7 @@ function getRateStatus(oldRate, newRate) {
     "goldRate" : 0,
     "gGoldRate" : 0,
     "TXprice" : 0,
-    "VIXrate" : 0,
+    "VIXprice" : 0,
   };
 
   if (dataExist === true) {
@@ -101,7 +101,8 @@ function getRateStatus(oldRate, newRate) {
   var spBidNum = parseFloat(spBid.replace(/,/g, ""));
 
   // exchange rate
-  await page.goto('https://rate.bot.com.tw/xrt');
+  // https://rate.bot.com.tw/xrt?Lang=zh-TW and en-US different
+  await page.goto('https://rate.bot.com.tw/xrt?Lang=zh-TW');
   var USD = await page.$eval('tr:nth-child(1) td:nth-child(2)', e => e.innerText);
   var NZD = await page.$eval('tr:nth-child(11) td:nth-child(4)', e => e.innerText);
 
@@ -140,7 +141,7 @@ function getRateStatus(oldRate, newRate) {
     message += "=====<br>";
     data.NZDrate = NZDrate;
   }
-  if(data.goldRate == 0 || (Math.abs(data.goldRate - goldRate) > 0.25)) {
+  if(data.goldRate == 0 || (Math.abs(data.goldRate - goldRate) > 0.05)) {
     message += "gold<br>";
     message += "台銀賣出 : " + ask + "<br>";
     message += "台銀買進 : " + bid + "<br>";
@@ -149,7 +150,7 @@ function getRateStatus(oldRate, newRate) {
     message += "=====<br>";
     data.goldRate = goldRate;
   }
-  if(data.gGoldRate == 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.25)) {
+  if(data.gGoldRate == 0 || (Math.abs(data.gGoldRate - gGoldRate) > 0.2 )) {
     message += "gold<br>";
     message += "國際賣出 : " + spAsk + "<br>";
     message += "國際買進 : " + spBid + "<br>";
@@ -163,12 +164,12 @@ function getRateStatus(oldRate, newRate) {
     message += "=====<br>";
     data.TXprice = TXprice;
   }
-  if(data.VIXrate == 0 || (Math.abs(data.VIXrate - VIXrate) > 0.2)) {
+  if(data.VIXprice == 0 || (Math.abs(data.VIXprice - VIXprice) > 0)) {
     message += "VIX<br>";
     message += "富邦VIX (00677U) : " + VIXprice + "<br>";
-    message += "報酬率 : " + getRateStatus(data.VIXrate, VIXrate) + VIXrate + "%<br>";
+    message += "報酬率 : " + getRateStatus(data.VIXprice, VIXprice) + VIXrate + "%<br>";
     message += "=====<br>";
-    data.VIXrate = VIXrate;
+    data.VIXprice = VIXprice;
   }
 
   if(message !== "<br>") {
